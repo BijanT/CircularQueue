@@ -1,12 +1,13 @@
 #include "CircularQueue.h"
 
 //Initialize a new Circular Queue
-int CQ_Init(CircularQueue* queue, void** arrayPtr, int itemSize, int arrayCapacity)
+int CQ_Init(CircularQueue* queue, void* arrayPtr, int itemSize, int arrayCapacity)
 {	
 	queue->arrayPtr = arrayPtr;
 	queue->front = queue->back = 0;
 	queue->itemSize = itemSize;
 	queue->capacity = arrayCapacity;
+	queue->arraySize = arrayCapacity * itemSize;
 	queue->numElements = 0;	
 
 	return 1;
@@ -22,7 +23,7 @@ int CQ_Enqueue(CircularQueue* queue, void* itemPtr)
 	}
 	
 	//Make sure the back is within the bounds of the array
-	if(queue->back < 0 || queue->back >= queue->capacity)
+	if(queue->back < 0 || queue->back >= queue->arraySize)
 	{
 		return 0;
 	}
@@ -35,19 +36,18 @@ int CQ_Enqueue(CircularQueue* queue, void* itemPtr)
  	}
 
 	//put the value of new item in the back of the queue
-	queue->arrayPtr[queue->back] = itemPtr;
+	//The value stored in back is the offset in bytes where the next element of the array is, so we add it to arrayPtr
+	//to put the data in the right place
+	memcpy(queue->arrayPtr + queue->back, itemPtr, queue->itemSize);	
 	
 	//update the back of the queue and increment numElements
 	//Make sure the value for the back doesn't go past the size of the array
-	if(queue->back == queue->capacity - 1)
+	queue->back += queue->itemSize;
+	if(queue->back >= queue->arraySize)
 	{
 		queue->back = 0;
 	}
-	else
-	{
-		queue->back += 1;
-	}
-	queue->numElements +=1;	
+	queue->numElements++;	
 
 	//return 1 to indicate success
 	return 1;
@@ -63,25 +63,30 @@ int CQ_Dequeue(CircularQueue* queue, void* itemOut)
 	}
 
 	//Make sure the front is within the bounds
-	if(queue->front < 0 || queue->front >= queue->capacity)
+	if(queue->front < 0 || queue->front >= queue->arraySize)
+	{
+		return 0;
+	}
+	
+	//Make sure there is at least one item in the Queue
+	if(queue->numElements <= 0)
 	{
 		return 0;
 	}
 
 	//Grab the item in the front of the queue
-	itemOut = queue->arrayPtr[queue->front];
-
+	//The value stored in front is the offset in bytes to where the next element in the queue is, so we add it to arrayPtr
+	//to get the data from the right place
+	memcpy(itemOut, queue->arrayPtr + queue->front, queue->itemSize);
+	
 	//Update the front and decrement numElements
 	//Make sure the value for the front doesn't go past the size of the array
-	if(queue->front == queue->capacity - 1)
+	queue->front += queue->itemSize;
+	if(queue->front >= queue->arraySize)
 	{
 		queue->front = 0;
 	}
-	else
-	{
-		queue->front += 1;
-	}
-	queue->numElements -= 1;
+	queue->numElements--;
 
 	return 1;
 }
