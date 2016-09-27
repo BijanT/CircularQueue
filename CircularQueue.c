@@ -22,7 +22,7 @@ int CQ_Enqueue(CircularQueue* queue, void* itemPtr)
 	}
 	
 	//Make sure the back is within the bounds of the array
-	if((*queue).back < 0 || (*queue).front >= (*queue).capacity)
+	if((*queue).back < 0 || (*queue).back >= (*queue).capacity)
 	{
 		return 0;
 	}
