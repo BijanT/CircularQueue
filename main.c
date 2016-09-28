@@ -23,7 +23,7 @@ int main(void)
 {
 	int array[5];
 	CircularQueue queue;
-	int array2[5] = {1, 2, 3, 4, 5};	
+	int array2[5] = {1, 2, 3, 4, 5};
 	
 	assert(CQ_Init(&queue, (void*)array, sizeof(int), 5) == 1);
 
@@ -60,12 +60,15 @@ int main(void)
 	}
 	for(int i = 0; i < 13; i++)
 	{
-		char input = 's';
-		CQ_Dequeue(&charQueue, &input);
-		recievingArray[i] = input;
+		CQ_Dequeue(&charQueue, &recievingArray[i]);
 	}
 
 	assert(strcmp(helloStr, recievingArray) == 0);
 	
+	//Make sure calling enqueue/dequeue with a null value returns 0
+	assert(CQ_Enqueue(NULL, &array2[1]) == 0);
+	assert(CQ_Enqueue(&queue, NULL) == 0);
+	assert(CQ_Dequeue(NULL, &array2[1]) == 0);
+
 	return 0;
 }
