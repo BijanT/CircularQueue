@@ -61,7 +61,7 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//Check for invalid array size
 	if (buffSize <=0) 
 	{
-		return 0
+		return 0;
 	}
 	
 	//Check for null pointers
@@ -83,6 +83,8 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		return 0;
  	}
 
+	uint32_t itemsWritten;
+
 	//Check if the queue has enough room for the entire array,
 	
 	//Case 1:
@@ -90,15 +92,16 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//copy the entire array to the back of the queue
 	if (queue->freeBytes >= buffSize)
 	{
+		//Calculate how many items will be written to the queue
+		itemsWritten = buffSize / queue->itemSize;
+
 		//Check if the back of the queue can fit the entire buffer array
 		
 		//Case 1: the back of the queue can fit the entire buffer array
 		//The function will copy the buffer array to the back of the queue
 		if (queue->arraySize - queue->back >= buffSize) 
 		{
-			memcpy(queue->arrayPtr + queue->back, buffPtr, buffSize);
-			
-			return (buffSize / queue->itemSize);
+			memcpy(queue->arrayPtr + queue->back, buffPtr, buffSize);	
 		}
 		
 		//Case 2: the back of the queue cannot fit the entire buffer array
@@ -113,11 +116,14 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			
 			memcpy(queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
 			memcpy(queue->arrayPtr, rest_buffPtr, bytesLeft_buffArray);
-			
-			return (buffSize / queue->itemSize);
 		}
 		
-		queue->numElements += buffSize / queue->itemSize; 
+		//Update the number of elements in the queue and the number of free bytes
+		queue->numElements += itemsWritten;
+		queue->freeBytes += buffSize;
+
+		return itemsWritten;
+ 
 	}	
 	
 	//Case 2:
@@ -125,11 +131,29 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//no operation will be done, and the function returns 0 to indicate failure.
 	else
 	{
+		//TODO change this so it adds all of the items it can
 		return 0;
 	}	
 	
-	//Return 1 to indicate success
-	return 1;
+	//Update the number of elements in the queue and the number of free bytes
+	queue->numElements += itemsWritten;
+	queue->freeBytes += buffSize;
+
+	//update the back of the queue
+	//Case 1: The back does not have to wrap arround to the front of the array
+	if(queue->back + itemsWritten < queue->arraySize)
+	{
+		queue->back += itemsWritten;
+	}
+	//Case 2: The back needs to wrap around to the front of the array
+	else
+	{
+		//The new value for the back will need to be the same as the number of bytes written to the front of the array
+		queue->back = itemsWritten - (queue->arraySize - queue->back);
+	}
+	
+	//Return the number of items written to indicate success
+	return itemsWritten;
 }
 
 //Remove an element from the front of the queue
