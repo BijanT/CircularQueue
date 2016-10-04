@@ -198,7 +198,6 @@ int CQ_Dequeue(CircularQueue* queue, void* itemOut)
 	//Grab the item in the front of the queue
 	//The value stored in front is the offset in bytes to where the next element in the queue is, so we add it to arrayPtr
 	//to get the data from the right place
-	int numItemsOut = buffSize / queue->itemSize;
 	
 	memcpy(itemOut, queue->arrayPtr + queue->front, queue->itemSize);
 	
