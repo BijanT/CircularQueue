@@ -161,13 +161,13 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//Case 1: The back does not have to wrap arround to the front of the array
 	if(queue->back + itemsWritten < queue->arraySize)
 	{
-		queue->back += itemsWritten;
+		queue->back += queue->itemSize * itemsWritten;
 	}
 	//Case 2: The back needs to wrap around to the front of the array
 	else
 	{
 		//The new value for the back will need to be the same as the number of bytes written to the front of the array
-		queue->back = itemsWritten - (queue->arraySize - queue->back);
+		queue->back = (queue->itemSize * itemsWritten) - (queue->arraySize - queue->back);
 	}
 	
 	//Return the number of items written to indicate success
@@ -263,7 +263,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	
 	//Update the front and decrement numElements
 	//Make sure the value for the front doesn't go past the size of the array
-	queue->front += itemsOut;
+	queue->front += numItemsOut * queue->itemSize;
 	if (queue->front >= queue->arraySize)
 	{
 		queue->front = 0;
