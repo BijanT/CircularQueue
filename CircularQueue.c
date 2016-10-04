@@ -117,27 +117,45 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			memcpy(queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
 			memcpy(queue->arrayPtr, rest_buffPtr, bytesLeft_buffArray);
 		}
-		
-		//Update the number of elements in the queue and the number of free bytes
-		queue->numElements += itemsWritten;
-		queue->freeBytes += buffSize;
-
-		return itemsWritten;
- 
 	}	
 	
 	//Case 2:
 	//The queue does not have enough room for the array, 
-	//no operation will be done, and the function returns 0 to indicate failure.
-	else
+	//the method would enqueue as many items as space allows.
+	else if (queue->freeBytes > 0)
 	{
-		//TODO change this so it adds all of the items it can
-		return 0;
+		itemsWritten = queue->freeBytes / queue->itemSize;
+		
+		//Copy as many items as space allows to the back of the queue
+		if (queue->arraySize - queue->back == queue->freeBytes
+			|| queue->front - queue->back == queue->freeBytes)
+		{
+			memcpy(queue->arrayPtr + queue->back, buffPtr, queue->freeBytes);
+		}
+		
+		else
+		{
+			uint32_t bytesLeft_Back = queue->arraySize - queue->back;
+			void *rest_buffPtr = queue->arrayPtr + bytesLeft_Back;
+			
+			uint32_t bytesLeft_buffArray = queue->freeBytes - bytesLeft_Back;
+			
+			memcpy(queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
+			memcpy(queue->arrayPtr, rest_buffPtr, bytesLeft_buffArray);
+		}
 	}	
+	
+	//Case 3:
+	//When the queue is full, no operation will be done,
+	//and return 0 to indicate failure.
+	else 
+	{
+		return 0;
+	}
 	
 	//Update the number of elements in the queue and the number of free bytes
 	queue->numElements += itemsWritten;
-	queue->freeBytes += buffSize;
+	queue->freeBytes -= buffSize;
 
 	//update the back of the queue
 	//Case 1: The back does not have to wrap arround to the front of the array
@@ -224,21 +242,19 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		return 0;
  	}
 	
-	//Check if the queue has more items than what's desired
-	uint32_t freeBytes = queue->arraySize - queue->numElements * queue->itemSize
-	
 	//Case 1: The queue does not have enough items to be taken out,
 	//		  take out whatever is left in the queue.
 	if (queue->numElements *  < buffSize)
 	{
+		//Copy all the item 
 		memccpy(buffPtr, queue->arrayPtr + queue->front, queue->itemSize * queue->numElements);
-		return 1;
+		return 
 	}
 	
 	//Case 2: The queue does have more than what's desired
 	uint32_t itemsOut = queue->itemSize * buffSize;
 	int numItemsOut = buffSize / 
-	memccpy(buffPtr, queue->arrayPtr + queue->front, itemsOut);
+	memcpy(buffPtr, queue->arrayPtr + queue->front, itemsOut);
 	
 	//Update the front and decrement numElements
 	//Make sure the value for the front doesn't go past the size of the array
