@@ -250,26 +250,33 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//		  take out whatever is left in the queue.
 	if (queue->numElements * queue->itemSize < buffSize)
 	{
-		memcpy(buffPtr, queue->arrayPtr + queue->front, queue->itemSize * queue->numElements);
+		uint32_t bytesOut = queue->itemSize * queue->numElements;
+		memcpy(buffPtr, queue->arrayPtr + queue->front, bytesOut);
 		numItemsOut = queue->numElements;
 		
-		//Update the data members of the queue
+		//Update the data members of the queue to indicate changes made 
+		//by the dequeue action.
+		queue->front += bytesOut;
 		queue->numElements = 0;
 		return numItemsOut;
 	}
 	
-	//Case 2: The queue does have more than what's desired
+	//Case 2: if the queue has more than enough or just enough items to be dequeued
 	
 	//Update the front and decrement numElements
 	//Make sure the value for the front doesn't go past the size of the array
-	queue->front += numItemsOut * queue->itemSize;
-	if (queue->front >= queue->arraySize)
+	else
 	{
-		queue->front = 0;
+		
+		memcpy(buffPtr, queue->arrayPtr + queue->front, buffSize);
+		
+		//Update the data members of the queue to indicate changes made 
+		//by the dequeue action.
+		queue->front += buffSize;
+		numItemsOut = buffSize / queue->itemSize;
+		queue->numElements -= numItemsOut;
+		return numItemsOut;
 	}
-	queue->numElements -= buffSize;
 	
-	numItemsOut = buffSize;
-	return numItemsOut;
 	
 }
