@@ -248,34 +248,51 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	
 	//Case 1: The queue does not have enough items to be taken out,
 	//		  take out whatever is left in the queue.
-	if (queue->numElements * queue->itemSize < buffSize)
+	if (queue->arraySize - queue->freeBytes < buffSize)
 	{
-		uint32_t bytesOut = queue->itemSize * queue->numElements;
+		uint32_t bytesOut = queue->arraySize - queue->freeBytes;
 		
 		//Case 1a: If the data being dequeued does not wrap around from the 
 		//		   back of the queue to the front of the queue
-		if (queue->front < queue->back)
+		if (queue->arraySize - queue->front >= buffSize)
 		{
 			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesOut);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
 			queue->front += bytesOut;
+			
+			//If the front reaches the end of the array, 
+			//wrap around the front by setting the front to 0
+			if (queue->front >= queue->arraySize) 
+			{
+				queue->front = 0;
+			}
 			queue->freeBytes += bytesOut;
-			queue->numElements = 0;
 			numItemsOut = queue->numElements;
+			queue->numElements = 0;
 			return numItemsOut;
 		}
 		
 		//Case 1b: If the data being dequeued wraps around from the 
 		//		   back of the queue to the front of the queue
 		
-		//TODO: implement this
+		//The dequeueBuffer in this case will dequeue all elements in the queue
 		else 
 		{
-			uint32_t bytesAfterBack;
-			uint32_t bytesBeforeFront;
+			uint32_t bytesAfterFront = queue->arraySize - queue->front;
+			uint32_t bytesBeforeBack = queue->back;
 			
+			memcpy(queue->front, buffPtr, bytesAfterFront);
+			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
+			
+			//Update the data members of the queue to indicate changes made 
+			//by the dequeue action.
+			queue->front = queue->back;
+			numItemsOut = queue->numElements;
+			queue->numElements = 0;
+			queue->freeBytes = queue->arraySize;
+			return numItemsOut;
 		}
 	}
 	
@@ -289,16 +306,26 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		//		   back of the queue to the front of the queue
 		uint32_t bytesOut = buffSize;
 		
-		if (1)
+		if (queue->arraySize - queue->front >= buffSize)
 		{
+			
 			memcpy(buffPtr, queue->arrayPtr + queue->front, buffSize);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
+			
+			
 			queue->front += buffSize;
+			
+			//If the front reaches the end of the array, 
+			//wrap around the front by setting the front to 0
+			if (queue->front >= queue->arraySize) 
+			{
+				queue->front = 0;
+			}
 			queue->freeBytes += bytesOut;
-			queue->numElements -= numItemsOut;
 			numItemsOut = buffSize / queue->itemSize;
+			queue->numElements -= numItemsOut;
 			return numItemsOut;
 		}
 		
@@ -308,7 +335,19 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		//TODO: implement this
 		else
 		{
+			uint32_t bytesAfterFront = queue->arraySize - queue->front;
+			uint32_t bytesBeforeBack = buffSize - bytesAfterFront;
 			
+			memcpy(queue->front, buffPtr, bytesAfterFront);
+			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
+			
+			//Update the data members of the queue to indicate changes made 
+			//by the dequeue action.
+			queue->front = bytesBeforeBack;
+			numItemsOut = buffSize / itemSize;
+			queue->numElements -= numItemsOut;
+			queue->freeBytes += buffSize;
+			return numItemsOut;
 		}
 	}
 	
