@@ -275,6 +275,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		{
 			uint32_t bytesAfterBack;
 			uint32_t bytesBeforeFront;
+			
 		}
 	}
 	
@@ -286,8 +287,9 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	{
 		//Case 2a: If the data being dequeued does not wrap around from the 
 		//		   back of the queue to the front of the queue
+		uint32_t bytesOut = buffSize;
 		
-		if ()
+		if (1)
 		{
 			memcpy(buffPtr, queue->arrayPtr + queue->front, buffSize);
 			
