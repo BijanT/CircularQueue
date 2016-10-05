@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "CircularQueue.h"
 
-int testNum = 1;
-
-void assert(int comparison)
+void assert(int comparison, int line)
 {
-	printf("Test #%d ", testNum);
+	printf("Test on line #%d ", line);
 	if(comparison == false)
 	{
 		printf("has failed\n");
@@ -15,8 +14,6 @@ void assert(int comparison)
 	{
 		printf("has passed\n");
 	}
-
-	testNum++;
 }
 
 int main(void)
@@ -24,8 +21,8 @@ int main(void)
 	int array[5];
 	CircularQueue queue;
 	int array2[5] = {1, 2, 3, 4, 5};
-	
-	assert(CQ_Init(&queue, (void*)array, sizeof(int), 5) == 1);
+
+	assert(CQ_Init(&queue, (void*)array, sizeof(int), 5) == 1, __LINE__);
 
 	for(int i = 0; i < 5; i++)
 	{
@@ -33,7 +30,7 @@ int main(void)
 	}
 	
 	//Test that the queue does not allow having more elements than there is capacity
-	assert(CQ_Enqueue(&queue, &array2[3]) == 0);
+	assert(CQ_Enqueue(&queue, &array2[3]) == 0, __LINE__);
 
 	for(int i = 0; i < 5; i++)
 	{
@@ -44,7 +41,7 @@ int main(void)
 
 	//Test that the queue reports a failure when trying to dequeue when there are no elements in the queue
 	int i;
-	assert(CQ_Dequeue(&queue, &i) == 0);
+	assert(CQ_Dequeue(&queue, &i) == 0, __LINE__);
 
 	//Test queueing chars
 	CircularQueue charQueue;
@@ -63,12 +60,37 @@ int main(void)
 		CQ_Dequeue(&charQueue, &recievingArray[i]);
 	}
 
-	assert(strcmp(helloStr, recievingArray) == 0);
+	assert(strcmp(helloStr, recievingArray) == 0, __LINE__);
 	
 	//Make sure calling enqueue/dequeue with a null value returns 0
-	assert(CQ_Enqueue(NULL, &array2[1]) == 0);
-	assert(CQ_Enqueue(&queue, NULL) == 0);
-	assert(CQ_Dequeue(NULL, &array2[1]) == 0);
+	assert(CQ_Enqueue(NULL, &array2[1]) == 0, __LINE__);
+	assert(CQ_Enqueue(&queue, NULL) == 0, __LINE__);
+	assert(CQ_Dequeue(NULL, &array2[1]) == 0, __LINE__);
 
+	//Test EnqueueBuffer
+	CircularQueue queue3;
+	char emptyArray3[5];
+	char output;
+		
+	CQ_Init(&queue3, (void*)emptyArray3, sizeof(char),5);
+	
+	i = CQ_EnqueueBuffer(&queue3, helloStr, 5*sizeof(char));
+
+	assert(i == 5, __LINE__);
+
+	//Make sure you cannot add more to the queue when it is full
+	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 0, __LINE__);
+
+	//Make sure EnqueueBuffer only enqueues as much as it has room for
+	CQ_Dequeue(&queue3, &output);
+	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 1, __LINE__);
+
+	//Print the output of queue3
+	while(CQ_Dequeue(&queue3, &output) != 0)
+	{
+		printf("%c", output);
+	}
+	printf("\n");
+	
 	return 0;
 }
