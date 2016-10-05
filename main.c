@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "CircularQueue.h"
 
 int testNum = 1;
@@ -70,5 +71,30 @@ int main(void)
 	assert(CQ_Enqueue(&queue, NULL) == 0);
 	assert(CQ_Dequeue(NULL, &array2[1]) == 0);
 
+	//Test EnqueueBuffer
+	CircularQueue queue3;
+	char emptyArray3[5];
+	char output;
+		
+	CQ_Init(&queue3, (void*)emptyArray3, sizeof(char),5);
+	
+	i = CQ_EnqueueBuffer(&queue3, helloStr, 5*sizeof(char));
+
+	assert(i == 5);
+
+	//Make sure you cannot add more to the queue when it is full
+	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 0);
+
+	//Make sure EnqueueBuffer only enqueues as much as it has room for
+	CQ_Dequeue(&queue3, &output);
+	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 1);
+
+	//Print the output of queue3
+	while(CQ_Dequeue(&queue3, &output) != 0)
+	{
+		printf("%c", output);
+	}
+	printf("\n");
+	
 	return 0;
 }
