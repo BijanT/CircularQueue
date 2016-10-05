@@ -70,8 +70,10 @@ int main(void)
 	//Test EnqueueBuffer
 	CircularQueue queue3;
 	char emptyArray3[5];
-	char output;
-		
+	char output;	
+	char outputArray[6];
+	outputArray[5] = '\0';
+	
 	CQ_Init(&queue3, (void*)emptyArray3, sizeof(char),5);
 	
 	i = CQ_EnqueueBuffer(&queue3, helloStr, 5*sizeof(char));
@@ -86,11 +88,30 @@ int main(void)
 	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 1, __LINE__);
 
 	//Print the output of queue3
-	while(CQ_Dequeue(&queue3, &output) != 0)
+	for(int i = 0; i < 5; i++)
 	{
-		printf("%c", output);
+		CQ_Dequeue(&queue3, &outputArray[i]);
 	}
-	printf("\n");
+	printf("%s\n", outputArray);
+
+	assert(strcmp("elloH", outputArray) == 0, __LINE__);
+
+	//Test case where the data has to wrap around the array
+	CQ_Init(&queue3, (void*)emptyArray3, sizeof(char), 5);
+	
+	CQ_EnqueueBuffer(&queue3, helloStr, 4*sizeof(char));
+
+	CQ_Dequeue(&queue3, &output);
+
+	CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char));
+
+	//print and test the contents of queue3
+	for(int i = 0; i < 5; i++)
+	{
+		CQ_Dequeue(&queue3, &outputArray[i]);
+	}
+	printf("%s\n", outputArray);
+	assert(strcmp("ellHe", outputArray) == 0, __LINE__);
 	
 	return 0;
 }
