@@ -283,7 +283,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = queue->back;
 			
-			memcpy(queue->front, buffPtr, bytesAfterFront);
+			memcpy(queue->arrayPtr + queue->front, buffPtr, bytesAfterFront);
 			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
 			
 			//Update the data members of the queue to indicate changes made 
@@ -338,13 +338,13 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = buffSize - bytesAfterFront;
 			
-			memcpy(queue->front, buffPtr, bytesAfterFront);
+			memcpy(queue->arrayPtr + queue->front, buffPtr, bytesAfterFront);
 			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
 			queue->front = bytesBeforeBack;
-			numItemsOut = buffSize / itemSize;
+			numItemsOut = buffSize / queue->itemSize;
 			queue->numElements -= numItemsOut;
 			queue->freeBytes += buffSize;
 			return numItemsOut;

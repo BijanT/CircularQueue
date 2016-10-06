@@ -21,6 +21,7 @@ typedef struct CircularQueue
 int CQ_Enqueue(CircularQueue* queue, void* itemPtr);
 int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize);
 int CQ_Dequeue(CircularQueue* queue, void* itemOut);
+int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize);
 int CQ_Init(CircularQueue* queue, void* arrayPtr, int itemSize, int arrayCapacity);
 
 #endif
