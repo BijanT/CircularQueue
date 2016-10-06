@@ -155,7 +155,7 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	
 	//Update the number of elements in the queue and the number of free bytes
 	queue->numElements += itemsWritten;
-	queue->freeBytes -= buffSize;
+	queue->freeBytes -= itemsWritten * queue->itemSize; 
 
 	//update the back of the queue
 	//Case 1: The back does not have to wrap arround to the front of the array
@@ -283,8 +283,8 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = queue->back;
 			
-			memcpy(queue->arrayPtr + queue->front, buffPtr, bytesAfterFront);
-			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
+			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesAfterFront);
+			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
@@ -338,8 +338,8 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = buffSize - bytesAfterFront;
 			
-			memcpy(queue->arrayPtr + queue->front, buffPtr, bytesAfterFront);
-			memcpy(queue->arrayPtr, buffPtr + bytesAfterFront, bytesBeforeBack);
+			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesAfterFront);
+			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
