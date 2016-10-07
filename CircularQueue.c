@@ -246,6 +246,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	//Declare a return value to indicate the number of items dequeued
 	int numItemsOut;
 	
+
 	//Case 1: The queue does not have enough items to be taken out,
 	//		  take out whatever is left in the queue.
 	if (queue->arraySize - queue->freeBytes < buffSize)
@@ -254,24 +255,9 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		
 		//Case 1a: If the data being dequeued does not wrap around from the 
 		//		   back of the queue to the front of the queue
-		if (queue->arraySize - queue->front >= buffSize)
+		if (queue->arraySize - queue->front >= bytesOut)
 		{
-			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesOut);
-			
-			//Update the data members of the queue to indicate changes made 
-			//by the dequeue action.
-			queue->front += bytesOut;
-			
-			//If the front reaches the end of the array, 
-			//wrap around the front by setting the front to 0
-			if (queue->front >= queue->arraySize) 
-			{
-				queue->front = 0;
-			}
-			queue->freeBytes += bytesOut;
-			numItemsOut = queue->numElements;
-			queue->numElements = 0;
-			return numItemsOut;
+			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesOut);	
 		}
 		
 		//Case 1b: If the data being dequeued wraps around from the 
@@ -281,19 +267,19 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		else 
 		{
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
-			uint32_t bytesBeforeBack = queue->back;
+			uint32_t bytesBeforeBack = queue->back;	
 			
 			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesAfterFront);
-			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
-			
-			//Update the data members of the queue to indicate changes made 
-			//by the dequeue action.
-			queue->front = queue->back;
-			numItemsOut = queue->numElements;
-			queue->numElements = 0;
-			queue->freeBytes = queue->arraySize;
-			return numItemsOut;
+			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);	
 		}
+
+		//Update the data members of the queue to indicate changes made 
+		//by the dequeue action.
+		queue->front = queue->back;
+		numItemsOut = queue->numElements;
+		queue->numElements = 0;
+		queue->freeBytes = queue->arraySize;
+		return numItemsOut;
 	}
 	
 	//Case 2: if the queue has more than enough or just enough items to be dequeued
@@ -324,9 +310,6 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 				queue->front = 0;
 			}
 			queue->freeBytes += bytesOut;
-			numItemsOut = buffSize / queue->itemSize;
-			queue->numElements -= numItemsOut;
-			return numItemsOut;
 		}
 		
 		//Case 2b: If the data being dequeued wraps around from the 
@@ -343,13 +326,12 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
-			queue->front = bytesBeforeBack;
-			numItemsOut = buffSize / queue->itemSize;
-			queue->numElements -= numItemsOut;
-			queue->freeBytes += buffSize;
-			return numItemsOut;
+			queue->front = bytesBeforeBack;	
 		}
+
+		numItemsOut = buffSize / queue->itemSize;
+		queue->numElements -= numItemsOut;
+		queue->freeBytes += bytesOut;
+		return numItemsOut;
 	}
-	
-	
 }
