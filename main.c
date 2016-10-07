@@ -77,21 +77,22 @@ int main(void)
 	CQ_Init(&queue3, (void*)emptyArray3, sizeof(char),5);
 	
 	i = CQ_EnqueueBuffer(&queue3, helloStr, 5*sizeof(char));
-
 	assert(i == 5, __LINE__);
 
-	//Make sure you cannot add more to the queue when it is full
-	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 0, __LINE__);
+	//Test DequeueBuffer with a simple case
+	CQ_DequeueBuffer(&queue3, &outputArray, 5*sizeof(char));
+	assert(strcmp("Hello", outputArray) == 0, __LINE__);
 
+	//Make sure you cannot add more to the queue when it is full
+	CQ_EnqueueBuffer(&queue3, helloStr, 5*sizeof(char));
+	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 0, __LINE__);
+	
 	//Make sure EnqueueBuffer only enqueues as much as it has room for
 	CQ_Dequeue(&queue3, &output);
-	assert(CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)) == 1, __LINE__);
-
+	i = CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char)); 
+	assert(i == 1, __LINE__);
 	//Print the output of queue3
-	for(int i = 0; i < 5; i++)
-	{
-		CQ_Dequeue(&queue3, &outputArray[i]);
-	}
+	CQ_DequeueBuffer(&queue3, &outputArray, 5*sizeof(char)); 
 	printf("%s\n", outputArray);
 
 	assert(strcmp("elloH", outputArray) == 0, __LINE__);
@@ -106,12 +107,19 @@ int main(void)
 	CQ_EnqueueBuffer(&queue3, helloStr, 2*sizeof(char));
 
 	//print and test the contents of queue3
-	for(int i = 0; i < 5; i++)
-	{
-		CQ_Dequeue(&queue3, &outputArray[i]);
-	}
+	CQ_DequeueBuffer(&queue3, &outputArray, 5*sizeof(char));
 	printf("%s\n", outputArray);
 	assert(strcmp("ellHe", outputArray) == 0, __LINE__);
-	
+
+	//Test calling DequeueBuffer asking for more elements than there are in the queue
+	for(int i =0; i < 6; i++)
+	{
+		outputArray[i] = '\0';
+	}
+	CQ_EnqueueBuffer(&queue3, helloStr, 3*sizeof(char));
+	assert(CQ_DequeueBuffer(&queue3, &outputArray, 5*sizeof(char)) == 3, __LINE__);
+	printf("%s\n", outputArray);
+	assert(strcmp("Hel", outputArray) == 0, __LINE__);
+
 	return 0;
 }
