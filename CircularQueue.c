@@ -309,7 +309,6 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			{
 				queue->front = 0;
 			}
-			queue->freeBytes += bytesOut;
 		}
 		
 		//Case 2b: If the data being dequeued wraps around from the 
