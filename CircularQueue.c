@@ -1,4 +1,8 @@
 #include "CircularQueue.h"
+///
+///NOTE: arrayPtr is cast to a (uint8_t*) because pointer arithmetic is not allowed
+///on void pointers, and uint8_t has a size of one byte
+///
 
 //Initialize a new Circular Queue
 int CQ_Init(CircularQueue* queue, void* arrayPtr, int itemSize, int arrayCapacity)
@@ -24,7 +28,7 @@ int CQ_Enqueue(CircularQueue* queue, void* itemPtr)
 	}
 	
 	//Make sure the back is within the bounds of the array
-	if(queue->back < 0 || queue->back >= queue->arraySize)
+	if(queue->back >= queue->arraySize)
 	{
 		return 0;
 	}
@@ -39,7 +43,7 @@ int CQ_Enqueue(CircularQueue* queue, void* itemPtr)
 	//put the value of new item in the back of the queue
 	//The value stored in back is the offset in bytes where the next element of the array is, so we add it to arrayPtr
 	//to put the data in the right place
-	memcpy(queue->arrayPtr + queue->back, itemPtr, queue->itemSize);	
+	memcpy((uint8_t*)queue->arrayPtr + queue->back, itemPtr, queue->itemSize);
 	
 	//update the back of the queue and increment numElements
 	//Make sure the value for the back doesn't go past the size of the array
@@ -71,7 +75,7 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	}
 	
 	//Make sure the back is within the bounds of the array
-	if(queue->back < 0 || queue->back >= queue->arraySize)
+	if(queue->back >= queue->arraySize)
 	{
 		return 0;
 	}
@@ -101,7 +105,7 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		//The function will copy the buffer array to the back of the queue
 		if (queue->arraySize - queue->back >= buffSize) 
 		{
-			memcpy(queue->arrayPtr + queue->back, buffPtr, buffSize);	
+			memcpy((uint8_t*)queue->arrayPtr + queue->back, buffPtr, buffSize);
 		}
 		
 		//Case 2: the back of the queue cannot fit the entire buffer array
@@ -110,11 +114,11 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		else 
 		{
 			uint32_t bytesLeft_Back = queue->arraySize - queue->back;
-			void *rest_buffPtr = buffPtr + bytesLeft_Back;
+			void *rest_buffPtr = (uint8_t*)buffPtr + bytesLeft_Back;
 			
 			uint32_t bytesLeft_buffArray = buffSize - bytesLeft_Back;
 			
-			memcpy(queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
+			memcpy((uint8_t*)queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
 			memcpy(queue->arrayPtr, rest_buffPtr, bytesLeft_buffArray);
 		}
 	}	
@@ -130,17 +134,17 @@ int CQ_EnqueueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		if (queue->arraySize - queue->back == queue->freeBytes
 			|| queue->front - queue->back == queue->freeBytes)
 		{
-			memcpy(queue->arrayPtr + queue->back, buffPtr, queue->freeBytes);
+			memcpy((uint8_t*)queue->arrayPtr + queue->back, buffPtr, queue->freeBytes);
 		}
 		
 		else
 		{
 			uint32_t bytesLeft_Back = queue->arraySize - queue->back;
-			void *rest_buffPtr = buffPtr + bytesLeft_Back;
+			void *rest_buffPtr = (uint8_t*)buffPtr + bytesLeft_Back;
 			
 			uint32_t bytesLeft_buffArray = queue->freeBytes - bytesLeft_Back;
 			
-			memcpy(queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
+			memcpy((uint8_t*)queue->arrayPtr + queue->back, buffPtr, bytesLeft_Back);
 			memcpy(queue->arrayPtr, rest_buffPtr, bytesLeft_buffArray);
 		}
 	}	
@@ -184,7 +188,7 @@ int CQ_Dequeue(CircularQueue* queue, void* itemOut)
 	}
 
 	//Make sure the front is within the bounds
-	if(queue->front < 0 || queue->front >= queue->arraySize)
+	if(queue->front >= queue->arraySize)
 	{
 		return 0;
 	}
@@ -199,7 +203,7 @@ int CQ_Dequeue(CircularQueue* queue, void* itemOut)
 	//The value stored in front is the offset in bytes to where the next element in the queue is, so we add it to arrayPtr
 	//to get the data from the right place
 	
-	memcpy(itemOut, queue->arrayPtr + queue->front, queue->itemSize);
+	memcpy(itemOut, (uint8_t*)queue->arrayPtr + queue->front, queue->itemSize);
 	
 	//Update the front and decrement numElements
 	//Make sure the value for the front doesn't go past the size of the array
@@ -225,7 +229,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 	}
 
 	//Make sure the front is within the bounds
-	if(queue->front < 0 || queue->front >= queue->arraySize)
+	if(queue->front >= queue->arraySize)
 	{
 		return 0;
 	}
@@ -257,7 +261,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		//		   back of the queue to the front of the queue
 		if (queue->arraySize - queue->front >= bytesOut)
 		{
-			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesOut);	
+			memcpy(buffPtr, (uint8_t*)queue->arrayPtr + queue->front, bytesOut);
 		}
 		
 		//Case 1b: If the data being dequeued wraps around from the 
@@ -269,8 +273,8 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = queue->back;	
 			
-			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesAfterFront);
-			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);	
+			memcpy(buffPtr, (uint8_t*)queue->arrayPtr + queue->front, bytesAfterFront);
+			memcpy((uint8_t*)buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
 		}
 
 		//Update the data members of the queue to indicate changes made 
@@ -295,7 +299,7 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 		if (queue->arraySize - queue->front >= buffSize)
 		{
 			
-			memcpy(buffPtr, queue->arrayPtr + queue->front, buffSize);
+			memcpy(buffPtr, (uint8_t*)queue->arrayPtr + queue->front, buffSize);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
@@ -320,8 +324,8 @@ int CQ_DequeueBuffer(CircularQueue* queue, void* buffPtr, int buffSize)
 			uint32_t bytesAfterFront = queue->arraySize - queue->front;
 			uint32_t bytesBeforeBack = buffSize - bytesAfterFront;
 			
-			memcpy(buffPtr, queue->arrayPtr + queue->front, bytesAfterFront);
-			memcpy(buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
+			memcpy(buffPtr, (uint8_t*)queue->arrayPtr + queue->front, bytesAfterFront);
+			memcpy((uint8_t*)buffPtr + bytesAfterFront, queue->arrayPtr, bytesBeforeBack);
 			
 			//Update the data members of the queue to indicate changes made 
 			//by the dequeue action.
